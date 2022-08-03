@@ -1,5 +1,5 @@
 # sandsim
-Falling sand simulator using CA
+Falling sand simulator using probabilistic classifier system.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
