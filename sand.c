@@ -1,16 +1,19 @@
 // Sand Simulator
-// Classifier System Based
+// Probabilistic Rules-based System Based
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
+#include <ncurses.h>
 
 // RNG Functions
 #define seed()          ( srand( time( NULL ) ) )
 #define getSRand()      ( ( float ) rand( ) / ( float ) RAND_MAX )
 #define getRand( x )    ( int ) ( ( x ) * getSRand( ) )
+
+WINDOW *mainwin;
 
 #define NROWS 35
 #define NCOLS 90
@@ -26,233 +29,221 @@ typedef struct
 
 rules_t translations[]=
 {
-   { "..."
-     "...",
-     "..."
-     "...",
+   { "   "
+     "   ",
+     "   "
+     "   ",
      1.0 },
 
-   { ".#."
-     "...",
-     "..."
-     ".#.",
+   { " * "
+     "   ",
+     "   "
+     " * ",
      1.0 },
 
-   { ".#."
-     "..#",
-     "..."
-     ".##",
+   { " * "
+     "  *",
+     "   "
+     " **",
      1.0 },
 
-   { ".#."
-     ".#.",
-     "..."
-     "##.",
+   { " * "
+     " * ",
+     "   "
+     "** ",
      0.1 },
 
-   { ".#."
-     ".#.",
-     "..."
-     ".##",
+   { " * "
+     " * ",
+     "   "
+     " **",
      0.1 },
 
-   { ".#."
-     ".##",
-     "..."
-     "###",
+   { " * "
+     " **",
+     "   "
+     "***",
      0.1 },
 
-   { ".#."
-     "#..",
-     "..."
-     "##.",
+   { " * "
+     "*  ",
+     "   "
+     "** ",
      1.0 },
 
-   { ".#."
-     "#.#",
-     "..."
-     "###",
+   { " * "
+     "* *",
+     "   "
+     "***",
      1.0 },
 
-   { ".#."
-     "##.",
-     "..."
-     "###",
+   { " * "
+     "** ",
+     "   "
+     "***",
      0.1 },
 
-   { ".##"
-     "...",
-     "..#"
-     ".#.",
+   { " **"
+     "   ",
+     "  *"
+     " * ",
      1.0 },
 
-   { ".##"
-     "..#",
-     "..#"
-     ".##",
+   { " **"
+     "  *",
+     "  *"
+     " **",
      1.0 },
 
-   { ".##"
-     ".#.",
-     "..#"
-     "##.",
+   { " **"
+     " * ",
+     "  *"
+     "** ",
      0.1 },
 
-   { ".##"
-     ".#.",
-     "..#"
-     ".##",
+   { " **"
+     " * ",
+     "  *"
+     " **",
      0.1 },
 
-   { ".##"
-     ".##",
-     "..#"
-     "###",
+   { " **"
+     " **",
+     "  *"
+     "***",
      0.1 },
 
-   { ".##"
-     "#..",
-     "..#"
-     "##.",
+   { " **"
+     "*  ",
+     "  *"
+     "** ",
      1.0 },
 
-   { ".##"
-     "#.#",
-     "..#"
-     "###",
+   { " **"
+     "* *",
+     "  *"
+     "***",
      1.0 },
 
-   { ".##"
-     "##.",
-     "..#"
-     "###",
+   { " **"
+     "** ",
+     "  *"
+     "***",
      0.1 },
 
-   { ".##"
-     "##.",
-     ".#."
-     "###",
+   { " **"
+     "** ",
+     " * "
+     "***",
      0.1 },
 
-   { "##."
-     "...",
-     "#.."
-     ".#.",
+   { "** "
+     "   ",
+     "*  "
+     " * ",
      1.0 },
 
-   { "##."
-     "..#",
-     "#.."
-     ".##",
+   { "** "
+     "  *",
+     "*  "
+     " **",
      1.0 },
 
-   { "##."
-     ".#.",
-     "#.."
-     "##.",
+   { "** "
+     " * ",
+     "*  "
+     "** ",
      0.1 },
 
-   { "##."
-     ".#.",
-     "#.."
-     ".##",
+   { "** "
+     " * ",
+     "*  "
+     " **",
      0.1 },
 
-   { "##."
-     ".##",
-     "#.."
-     "###",
+   { "** "
+     " **",
+     "*  "
+     "***",
      0.1 },
 
-   { "##."
-     "#..",
-     "#.."
-     "##.",
+   { "** "
+     "*  ",
+     "*  "
+     "** ",
      1.0 },
 
-   { "##."
-     "#.#",
-     "#.."
-     "###",
+   { "** "
+     "* *",
+     "*  "
+     "***",
      1.0 },
 
-   { "##."
-     "##.",
-     "#.."
-     "###",
+   { "** "
+     "** ",
+     "*  "
+     "***",
      0.1 },
 
-   { "###"
-     "...",
-     "#.#"
-     ".#.",
+   { "***"
+     "   ",
+     "* *"
+     " * ",
      1.0 },
 
-   { "###"
-     "..#",
-     "# #"
-     ".##",
+   { "***" // here
+     "  *",
+     "* *"
+     " **",
      1.0 },
 
-   { "###"
-     ".#.",
-     "#.#"
-     "##.",
+   { "***"
+     " * ",
+     "* *"
+     "** ",
      0.1 },
 
-   { "###"
-     ".#.",
-     "# #"
-     ".##",
+   { "***"
+     " * ",
+     "* *"
+     " **",
      0.1 },
 
-   { "###"
-     ".##",
-     "#.#"
-     "###",
+   { "***"
+     " **",
+     "* *"
+     "***",
      0.1 },
 
-   { "###"
-     "#..",
-     "#.#"
-     "##.",
+   { "***"
+     "*  ",
+     "* *"
+     "** ",
      1.0 },
 
-   { "###"
-     "#.#",
-     "#.#"
-     "###",
+   { "***"
+     "* *",
+     "* *"
+     "***",
       1.0 },
 
-   { "###"
-     "##.",
-     "##."
-     "###",
+   { "***"
+     "** ",
+     "** "
+     "***",
      1.0 }
 };
 
 
-void print_canvas( void )
+void delay( void )
 {
-   for ( int rows = 0 ; rows < NROWS ; rows++ )
-   {
-      for ( int cols = 0 ; cols < NCOLS ; cols++ )
-      {
-         printf( "%c", canvas[ rows ][ cols ] );
-      }
-      printf("\n");
-   }
-   printf("\n");
+    struct timespec timer;
+    timer.tv_sec = 0;
+    timer.tv_nsec = 100000000;
 
-
-   struct timespec timer;
-   timer.tv_sec = 0;
-   timer.tv_nsec = 100000000;
-
-   nanosleep( &timer, NULL );
-
-   return;
+    nanosleep( &timer, NULL );
 }
+
 
 void drop_sand( void )
 {
@@ -260,17 +251,18 @@ void drop_sand( void )
     // Populate top
     for ( int i = 0 ; i < NCOLS ; i++ )
     {
-        if ( getSRand() > 0.995 ) canvas[ 0 ][ i ] = '#';
-        else canvas[ 0 ][ i ] = '.';
+        if ( getSRand() > 0.995 ) canvas[ 0 ][ i ] = '*';
+        else canvas[ 0 ][ i ] = ' ';
     }
 #else
-    if ( getSRand() > 0.7 ) canvas[ 0 ][ 25 ] = '#';
-    if ( getSRand() > 0.1 ) canvas[ 0 ][ 40 ] = '#';
-    if ( getSRand() > 0.6 ) canvas[ 0 ][ 55 ] = '#';
+    if ( getSRand() > 0.7 ) canvas[ 0 ][ 25 ] = '*';
+    if ( getSRand() > 0.1 ) canvas[ 0 ][ 40 ] = '*';
+    if ( getSRand() > 0.6 ) canvas[ 0 ][ 55 ] = '*';
 #endif
 
     return;
 }
+
 
 int get_cell( int row, int col )
 {
@@ -280,8 +272,9 @@ int get_cell( int row, int col )
     return 1;
   }
 
-  return ( canvas[ row ][ col ] == '#' ) ? 1 : 0;
+  return ( canvas[ row ][ col ] == '*' ) ? 1 : 0;
 }
+
 
 void put_cell( int row, int col, int val )
 {
@@ -293,11 +286,11 @@ void put_cell( int row, int col, int val )
 
   if ( val )
   {
-    canvas[ row ][ col ] = '#';
+    canvas[ row ][ col ] = '*';
   }
   else
   {
-    canvas[ row ][ col ] = '.';
+    canvas[ row ][ col ] = ' ';
   }
 
 }
@@ -305,7 +298,7 @@ void put_cell( int row, int col, int val )
 
 int xlate( char x )
 {
-   return ( x == '#' ) ? 1 : 0;
+   return ( x == '*' ) ? 1 : 0;
 }
 
 
@@ -371,18 +364,61 @@ void simulate_sand( void )
     return;
 }
 
+
+void win_startup( void )
+{
+    initscr( );
+    cbreak( );
+    noecho( );
+    curs_set( 0 );
+    nonl( );
+
+    mainwin = newwin( NROWS+2, NCOLS+2, 0, 0 );
+    nodelay( mainwin, TRUE );
+    keypad( mainwin, TRUE );
+}
+
+
+void win_update( void )
+{
+    wborder( mainwin, 0, 0, 0, 0, 0, 0, 0, 0 );
+
+    for ( int rows = 0 ; rows < NROWS ; rows++ )
+    {
+        for ( int cols = 0 ; cols < NCOLS ; cols++ )
+        {
+            mvwaddch( mainwin, rows+1, cols+1, canvas[ rows ][ cols ] );
+        }
+    }
+
+    wrefresh( mainwin );
+    delay( );
+}
+
+
+void win_shutdown( void )
+{
+    delwin( mainwin );
+    endwin( );
+}
+
+
 void main( void )
 {
    seed();
 
-   memset( canvas, '.', sizeof(canvas) );
+   memset( canvas, ' ', sizeof(canvas) );
+
+   win_startup( );
 
    for ( int i = 0 ; i < 800 ; i++ )
    {
       if ( i < 450 ) drop_sand();
       simulate_sand();
-      print_canvas();
+      win_update( );
    }
+
+   win_shutdown( );
 
    return;
 }
